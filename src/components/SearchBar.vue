@@ -63,7 +63,7 @@ defineExpose({ clearSearch });
   <div class="relative">
     <div
       class="relative flex items-center transition-all duration-300 ease-in-out"
-      :class="isExpanded ? 'w-80' : 'w-10'"
+      :class="isExpanded ? 'w-60 md:w-80' : 'w-10'"
     >
       <button
         v-if="!isExpanded"

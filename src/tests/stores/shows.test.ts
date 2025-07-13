@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
-import { useShowsStore, setTvmazeRepository } from '../../stores/shows';
+import { useShowsStore, setTvmazeRepository, ShowType } from '../../stores/shows';
 import { type Show, ImageType } from '../../types/tvmaze';
 import type { ITvmazeRepository } from '../../repositories/tvmaze-repository';
 
@@ -30,6 +30,9 @@ describe('useShowsStore', () => {
       expect(store.isSearching).toBe(false);
       expect(store.show).toBeNull();
       expect(store.showBanner).toBeNull();
+      expect(store.selectedGenres).toEqual([]);
+      expect(store.minRating).toBe(0);
+      expect(store.selectedType).toBe(ShowType.All);
     });
   });
 
@@ -92,6 +95,292 @@ describe('useShowsStore', () => {
       });
     });
 
+    describe('filteredShows', () => {
+      it('should return all shows when no filters are applied', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+        ];
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].name).toBe('Show 1');
+        expect(result[1].name).toBe('Show 2');
+      });
+
+      it('should filter by selected genres', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+          { id: 3, name: 'Show 3', genres: ['Drama', 'Crime'], rating: { average: 9.0 } } as Show,
+        ];
+        store.selectedGenres = ['Drama'];
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].name).toBe('Show 1');
+        expect(result[1].name).toBe('Show 3');
+      });
+
+      it('should filter by minimum rating', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+          { id: 3, name: 'Show 3', genres: ['Action'], rating: { average: 9.0 } } as Show,
+        ];
+        store.minRating = 8.0;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].name).toBe('Show 1');
+        expect(result[1].name).toBe('Show 3');
+      });
+
+      it('should filter by show type (Movie)', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          {
+            id: 1,
+            name: 'Movie 1',
+            genres: ['Drama'],
+            rating: { average: 8.0 },
+            runtime: 120,
+          } as Show,
+          {
+            id: 2,
+            name: 'TV Show 1',
+            genres: ['Comedy'],
+            rating: { average: 7.5 },
+            runtime: 30,
+          } as Show,
+          {
+            id: 3,
+            name: 'Movie 2',
+            genres: ['Action'],
+            rating: { average: 9.0 },
+            runtime: 90,
+          } as Show,
+        ];
+        store.selectedType = ShowType.Movie;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].name).toBe('Movie 1');
+        expect(result[1].name).toBe('Movie 2');
+      });
+
+      it('should filter by show type (TV)', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          {
+            id: 1,
+            name: 'Movie 1',
+            genres: ['Drama'],
+            rating: { average: 8.0 },
+            runtime: 120,
+          } as Show,
+          {
+            id: 2,
+            name: 'TV Show 1',
+            genres: ['Comedy'],
+            rating: { average: 7.5 },
+            runtime: 30,
+          } as Show,
+          {
+            id: 3,
+            name: 'TV Show 2',
+            genres: ['Action'],
+            rating: { average: 9.0 },
+            runtime: 45,
+          } as Show,
+        ];
+        store.selectedType = ShowType.TV;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].name).toBe('TV Show 1');
+        expect(result[1].name).toBe('TV Show 2');
+      });
+
+      it('should combine multiple filters', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+          { id: 3, name: 'Show 3', genres: ['Drama'], rating: { average: 9.0 } } as Show,
+        ];
+        store.selectedGenres = ['Drama'];
+        store.minRating = 8.5;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('Show 3');
+      });
+
+      it('should handle shows with no rating', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: null } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+        ];
+        store.minRating = 8.0;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(0);
+      });
+
+      it('should remove duplicates', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          { id: 2, name: 'Show 2', genres: ['Comedy'], rating: { average: 7.5 } } as Show,
+        ];
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(2);
+        expect(result[0].id).toBe(1);
+        expect(result[1].id).toBe(2);
+      });
+
+      it('should handle shows with no runtime for type filtering', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          { id: 1, name: 'Show 1', genres: ['Drama'], rating: { average: 8.0 } } as Show,
+          {
+            id: 2,
+            name: 'Show 2',
+            genres: ['Comedy'],
+            rating: { average: 7.5 },
+            runtime: 30,
+          } as Show,
+          {
+            id: 3,
+            name: 'Show 3',
+            genres: ['Action'],
+            rating: { average: 9.0 },
+            runtime: 120,
+          } as Show,
+        ];
+        store.selectedType = ShowType.Movie;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('Show 3');
+      });
+
+      it('should handle shows with null runtime for type filtering', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          {
+            id: 1,
+            name: 'Show 1',
+            genres: ['Drama'],
+            rating: { average: 8.0 },
+            runtime: null,
+          } as Show,
+          {
+            id: 2,
+            name: 'Show 2',
+            genres: ['Comedy'],
+            rating: { average: 7.5 },
+            runtime: 30,
+          } as Show,
+          {
+            id: 3,
+            name: 'Show 3',
+            genres: ['Action'],
+            rating: { average: 9.0 },
+            runtime: 120,
+          } as Show,
+        ];
+        store.selectedType = ShowType.TV;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('Show 2');
+      });
+
+      it('should handle edge case runtime values', () => {
+        const store = useShowsStore();
+        store.allShows = [
+          {
+            id: 1,
+            name: 'Show 1',
+            genres: ['Drama'],
+            rating: { average: 8.0 },
+            runtime: 60,
+          } as Show,
+          {
+            id: 2,
+            name: 'Show 2',
+            genres: ['Comedy'],
+            rating: { average: 7.5 },
+            runtime: 61,
+          } as Show,
+          {
+            id: 3,
+            name: 'Show 3',
+            genres: ['Action'],
+            rating: { average: 9.0 },
+            runtime: 59,
+          } as Show,
+        ];
+        store.selectedType = ShowType.Movie;
+
+        const result = store.filteredShows;
+
+        expect(result).toHaveLength(1);
+        expect(result[0].name).toBe('Show 2');
+      });
+    });
+
+    describe('hasActiveFilters', () => {
+      it('should return false when no filters are applied', () => {
+        const store = useShowsStore();
+        expect(store.hasActiveFilters).toBe(false);
+      });
+
+      it('should return true when genres are selected', () => {
+        const store = useShowsStore();
+        store.selectedGenres = ['Drama'];
+        expect(store.hasActiveFilters).toBe(true);
+      });
+
+      it('should return true when min rating is set', () => {
+        const store = useShowsStore();
+        store.minRating = 8.0;
+        expect(store.hasActiveFilters).toBe(true);
+      });
+
+      it('should return true when show type is not All', () => {
+        const store = useShowsStore();
+        store.selectedType = ShowType.Movie;
+        expect(store.hasActiveFilters).toBe(true);
+      });
+
+      it('should return true when multiple filters are applied', () => {
+        const store = useShowsStore();
+        store.selectedGenres = ['Drama'];
+        store.minRating = 8.0;
+        store.selectedType = ShowType.TV;
+        expect(store.hasActiveFilters).toBe(true);
+      });
+    });
+
     describe('filteredSearchResults', () => {
       it('should return empty array when no search query', () => {
         const store = useShowsStore();
@@ -149,6 +438,97 @@ describe('useShowsStore', () => {
   });
 
   describe('Actions', () => {
+    describe('setSelectedGenres', () => {
+      it('should set selected genres', () => {
+        const store = useShowsStore();
+        const genres = ['Drama', 'Comedy'];
+
+        store.setSelectedGenres(genres);
+
+        expect(store.selectedGenres).toEqual(genres);
+      });
+
+      it('should replace existing genres', () => {
+        const store = useShowsStore();
+        store.selectedGenres = ['Action'];
+
+        store.setSelectedGenres(['Drama', 'Comedy']);
+
+        expect(store.selectedGenres).toEqual(['Drama', 'Comedy']);
+      });
+    });
+
+    describe('setMinRating', () => {
+      it('should set minimum rating', () => {
+        const store = useShowsStore();
+        const rating = 8.5;
+
+        store.setMinRating(rating);
+
+        expect(store.minRating).toBe(rating);
+      });
+
+      it('should handle zero rating', () => {
+        const store = useShowsStore();
+        store.minRating = 8.5;
+
+        store.setMinRating(0);
+
+        expect(store.minRating).toBe(0);
+      });
+    });
+
+    describe('setSelectedType', () => {
+      it('should set show type to All', () => {
+        const store = useShowsStore();
+        store.selectedType = ShowType.Movie;
+
+        store.setSelectedType(ShowType.All);
+
+        expect(store.selectedType).toBe(ShowType.All);
+      });
+
+      it('should set show type to Movie', () => {
+        const store = useShowsStore();
+
+        store.setSelectedType(ShowType.Movie);
+
+        expect(store.selectedType).toBe(ShowType.Movie);
+      });
+
+      it('should set show type to TV', () => {
+        const store = useShowsStore();
+
+        store.setSelectedType(ShowType.TV);
+
+        expect(store.selectedType).toBe(ShowType.TV);
+      });
+    });
+
+    describe('clearFilters', () => {
+      it('should clear all filters', () => {
+        const store = useShowsStore();
+        store.selectedGenres = ['Drama', 'Comedy'];
+        store.minRating = 8.0;
+        store.selectedType = ShowType.Movie;
+
+        store.clearFilters();
+
+        expect(store.selectedGenres).toEqual([]);
+        expect(store.minRating).toBe(0);
+        expect(store.selectedType).toBe(ShowType.All);
+      });
+
+      it('should clear filters when already empty', () => {
+        const store = useShowsStore();
+        store.clearFilters();
+
+        expect(store.selectedGenres).toEqual([]);
+        expect(store.minRating).toBe(0);
+        expect(store.selectedType).toBe(ShowType.All);
+      });
+    });
+
     describe('loadShowsCatalog', () => {
       it('should load shows successfully', async () => {
         const mockShows = [
@@ -188,7 +568,7 @@ describe('useShowsStore', () => {
         expect(store.loading).toBe(false);
         expect(store.error).toBe(errorMessage);
         expect(store.allShows).toEqual([]);
-        expect(mockTvmazeRepository.getAllShows).toHaveBeenCalledTimes(1); // Should stop on first error
+        expect(mockTvmazeRepository.getAllShows).toHaveBeenCalledTimes(1);
       });
 
       it('should load multiple pages', async () => {

@@ -8,6 +8,12 @@ export const setTvmazeRepository = (repository: ITvmazeRepository) => {
   tvmazeRepository = repository;
 };
 
+export enum ShowType {
+  All = 'all',
+  Movie = 'movie',
+  TV = 'tv',
+}
+
 interface ShowsState {
   allShows: Show[];
   loading: boolean;
@@ -17,6 +23,9 @@ interface ShowsState {
   isSearching: boolean;
   show: Show | null;
   showBanner: ImageResponse | null;
+  selectedGenres: string[];
+  minRating: number;
+  selectedType: ShowType;
 }
 
 interface GenreSection {
@@ -34,6 +43,9 @@ export const useShowsStore = defineStore('shows', {
     isSearching: false,
     show: null,
     showBanner: null,
+    selectedGenres: [],
+    minRating: 0,
+    selectedType: ShowType.All,
   }),
 
   getters: {
@@ -95,6 +107,34 @@ export const useShowsStore = defineStore('shows', {
 
     isInSearchMode: (state): boolean => {
       return state.searchQuery.trim().length > 0;
+    },
+
+    filteredShows(): Show[] {
+      const seen = new Set<number>();
+
+      return this.allShows.filter((show) => {
+        if (!isTypeMatch(show, this.selectedType)) return false;
+        if (
+          this.selectedGenres.length > 0 &&
+          !this.selectedGenres.some((genre) => show.genres.includes(genre))
+        ) {
+          return false;
+        }
+
+        const showRating = show.rating.average || 0;
+        if (showRating < this.minRating) return false;
+        if (seen.has(show.id)) return false;
+        seen.add(show.id);
+        return true;
+      });
+    },
+
+    hasActiveFilters: (state): boolean => {
+      return (
+        state.selectedGenres.length > 0 ||
+        state.minRating > 0 ||
+        state.selectedType !== ShowType.All
+      );
     },
   },
 
@@ -185,5 +225,30 @@ export const useShowsStore = defineStore('shows', {
       this.searchQuery = '';
       this.error = null;
     },
+
+    setSelectedGenres(genres: string[]) {
+      this.selectedGenres = genres;
+    },
+
+    setMinRating(rating: number) {
+      this.minRating = rating;
+    },
+
+    setSelectedType(type: ShowType) {
+      this.selectedType = type;
+    },
+
+    clearFilters() {
+      this.selectedGenres = [];
+      this.minRating = 0;
+      this.selectedType = ShowType.All;
+    },
   },
 });
+
+function isTypeMatch(show: Show, type: ShowType): boolean {
+  if (type === ShowType.All) return true;
+  if (type === ShowType.Movie) return !!show.runtime && show.runtime > 60;
+  if (type === ShowType.TV) return !!show.runtime && show.runtime <= 60;
+  return true;
+}

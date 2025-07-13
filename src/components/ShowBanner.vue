@@ -26,7 +26,7 @@ const handleClick = () => {
 
 <template>
   <div
-    class="relative w-full min-h-96 md:min-h-200 overflow-hidden mb-8 transition-all duration-500 ease-in-out"
+    class="relative w-full min-h-96 md:min-h-200 overflow-hidden mb-8 transition-all duration-500 ease-in-out mt-16 md:mt-0"
     :class="{ 'cursor-pointer': showSummary }"
     @click="handleClick"
     @mouseenter="isHovered = true"
@@ -43,6 +43,12 @@ const handleClick = () => {
 
       <div
         class="absolute inset-0 bg-gradient-to-t from-background/100 via-background/30 to-transparent"
+      />
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-background/100 via-background/10 to-transparent"
+      />
+      <div
+        class="absolute inset-0 bg-gradient-to-l from-background/100 via-background/10 to-transparent"
       />
     </div>
 

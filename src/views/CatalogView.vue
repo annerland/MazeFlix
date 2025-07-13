@@ -1,16 +1,27 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useShowsStore } from '../stores/shows';
 import { type Show } from '../types/tvmaze';
+import { useLazyLoading } from '../composables/useLazyLoading';
 import GenreRow from '../components/GenreRow.vue';
-import ShowCard from '../components/ShowCard.vue';
 import Loading from '../components/Loading.vue';
 import EmptyState from '../components/EmptyState.vue';
 import ShowBanner from '../components/ShowBanner.vue';
+import SearchMode from '../components/SearchMode.vue';
+import ShowFilter from '../components/ShowFilter.vue';
+import FilteredResults from '../components/FilteredResults.vue';
 
 const router = useRouter();
 const showsStore = useShowsStore();
+
+const {
+  visibleItems: visibleGenres,
+  hasMoreItems: hasMoreGenres,
+  isLoading: isLoadingMore,
+  progressPercentage,
+  reset: resetLazyLoading,
+} = useLazyLoading(() => showsStore.showsByGenre, 4, 4, 200);
 
 onMounted(async () => {
   const randomId = Math.floor(Math.random() * 1000) + 1;
@@ -22,6 +33,15 @@ onMounted(async () => {
 const handleShowClick = (show: Show) => {
   router.push(`/show/${show.id}`);
 };
+
+watch(
+  () => [showsStore.isInSearchMode, showsStore.hasActiveFilters],
+  ([isSearchMode, hasFilters]) => {
+    if (!isSearchMode && !hasFilters) {
+      resetLazyLoading();
+    }
+  },
+);
 </script>
 
 <template>
@@ -41,36 +61,33 @@ const handleShowClick = (show: Show) => {
 
     <main>
       <Loading v-if="showsStore.loading" :message="showsStore.error ?? 'Loading shows...'" />
-      <div v-else-if="showsStore.isInSearchMode" class="mt-32">
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold mb-4">Search Results for "{{ showsStore.searchQuery }}"</h2>
-          <p class="text-gray-400 mb-6">
-            Found {{ showsStore.filteredSearchResults.length }} shows
-          </p>
-        </div>
+      <SearchMode v-if="showsStore.isInSearchMode" />
+      <ShowFilter v-if="!showsStore.isInSearchMode" />
+      <FilteredResults v-if="showsStore.hasActiveFilters && !showsStore.isInSearchMode" />
 
-        <div v-if="showsStore.filteredSearchResults.length > 0" class="flex flex-wrap gap-4">
-          <ShowCard
-            v-for="show in showsStore.filteredSearchResults"
-            :key="show.id"
-            :show="show"
-            @click="handleShowClick"
-          />
-        </div>
-        <EmptyState v-else message="No shows found matching your search." />
-      </div>
-
-      <div v-else>
+      <div v-else-if="!showsStore.isInSearchMode">
         <div v-if="showsStore.showsByGenre.length > 0">
           <GenreRow
-            v-for="genreSection in showsStore.showsByGenre"
+            v-for="genreSection in visibleGenres"
             :key="genreSection.genre"
             :genre="genreSection.genre"
             :shows="genreSection.shows"
             @show-click="handleShowClick"
           />
-        </div>
 
+          <div v-if="isLoadingMore" class="flex justify-center mt-8 mb-8">
+            <div class="flex items-center space-x-2 text-white">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+              <span>Loading more shows...</span>
+            </div>
+          </div>
+
+          <div v-if="hasMoreGenres" class="flex justify-center mt-4 mb-8">
+            <div class="text-sm text-gray-400">
+              Showing {{ Math.round(progressPercentage) }}% of genres
+            </div>
+          </div>
+        </div>
         <EmptyState v-else message="No shows available." />
       </div>
     </main>

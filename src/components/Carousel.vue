@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import ArrowLeft from '../assets/icons/ArrowLeft.vue';
 import ArrowRight from '../assets/icons/ArrowRight.vue';
+import { useTouchDrag } from '../composables/useTouchDrag';
+import { useMobileDetection } from '../composables/useMobileDetection';
 
 interface Props<T = unknown> {
   items: T[];
@@ -16,16 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const currentIndex = ref(0);
 const containerRef = ref<HTMLDivElement>();
-const isMobile = ref(false);
-
-onMounted(() => {
-  const checkMobile = () => {
-    isMobile.value = window.screen.availWidth < 768;
-  };
-
-  checkMobile();
-  window.addEventListener('resize', checkMobile);
-});
+const { isMobile } = useMobileDetection();
 
 const responsiveItemsPerView = computed(() => {
   return isMobile.value ? 2.5 : props.itemsPerView;
@@ -62,6 +55,20 @@ const translateX = computed(() => {
 const transitionDuration = computed(() => {
   return isMobile.value ? '700ms' : '500ms';
 });
+
+const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchDrag({
+  isMobile,
+  currentIndex,
+  canGoPrevious,
+  canGoNext,
+  goPrevious,
+  goNext,
+  translateX,
+  transitionDuration,
+  containerRef,
+  itemWidth: 128,
+  gap: props.gap,
+});
 </script>
 
 <template>
@@ -83,6 +90,9 @@ const transitionDuration = computed(() => {
         gap: `${gap}px`,
         transitionDuration: transitionDuration,
       }"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
     >
       <slot />
     </div>

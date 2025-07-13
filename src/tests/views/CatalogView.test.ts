@@ -13,6 +13,75 @@ const mockTvmazeRepository: ITvmazeRepository = {
   getShowImages: vi.fn(),
 };
 
+const createMockShows = (count: number = 8) => {
+  const shows: Show[] = [];
+  const genres = [
+    'Drama',
+    'Comedy',
+    'Action',
+    'Thriller',
+    'Romance',
+    'Sci-Fi',
+    'Horror',
+    'Documentary',
+  ];
+
+  for (let i = 1; i <= count; i++) {
+    shows.push({
+      id: i,
+      name: `Show ${i}`,
+      genres: [genres[i - 1]],
+      rating: { average: 9.5 - i * 0.2 },
+    } as Show);
+  }
+
+  return shows;
+};
+
+const createMockShow = (
+  id: number = 1,
+  name: string = 'Test Show',
+  genres: string[] = ['Drama'],
+): Show =>
+  ({
+    id,
+    name,
+    genres,
+    rating: { average: 8.5 },
+  }) as Show;
+
+const createMockBanner = (): ImageResponse =>
+  ({
+    type: 'background',
+    resolutions: { original: { url: 'test.jpg', width: 1920, height: 1080 } },
+  }) as ImageResponse;
+
+const setupStore = (
+  options: {
+    loading?: boolean;
+    searchQuery?: string;
+    searchResults?: Show[];
+    allShows?: Show[];
+    show?: Show;
+    showBanner?: ImageResponse;
+    selectedGenres?: string[];
+    error?: string;
+  } = {},
+) => {
+  const store = useShowsStore();
+
+  store.loading = options.loading ?? false;
+  store.searchQuery = options.searchQuery ?? '';
+  store.searchResults = options.searchResults ?? [];
+  store.allShows = options.allShows ?? [];
+  store.show = options.show ?? null;
+  store.showBanner = options.showBanner ?? null;
+  store.selectedGenres = options.selectedGenres ?? [];
+  store.error = options.error ?? null;
+
+  return store;
+};
+
 describe('CatalogView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,34 +106,26 @@ describe('CatalogView', () => {
 
   describe('Component Rendering', () => {
     it('should show loading state when loading', () => {
-      const store = useShowsStore();
-      store.loading = true;
-      store.error = 'Loading shows...';
+      setupStore({ loading: true, error: 'Loading shows...' });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'Loading' }).exists()).toBe(true);
     });
 
     it('should show banner when not in search mode and has show data', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.show = { id: 1, name: 'Breaking Bad', genres: ['Drama'] } as Show;
-      store.showBanner = {
-        type: 'background',
-        resolutions: { original: { url: 'test.jpg', width: 1920, height: 1080 } },
-      } as ImageResponse;
+      setupStore({
+        show: createMockShow(),
+        showBanner: createMockBanner(),
+      });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'ShowBanner' }).exists()).toBe(true);
     });
 
     it('should not show banner in search mode', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = 'breaking';
-      store.show = { id: 1, name: 'Breaking Bad', genres: ['Drama'] } as Show;
-      store.showBanner = {
-        type: 'background',
-        resolutions: { original: { url: 'test.jpg', width: 1920, height: 1080 } },
-      } as ImageResponse;
+      setupStore({
+        searchQuery: 'breaking',
+        show: createMockShow(),
+        showBanner: createMockBanner(),
+      });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'ShowBanner' }).exists()).toBe(false);
     });
@@ -72,74 +133,123 @@ describe('CatalogView', () => {
 
   describe('Search Mode', () => {
     it('should show search results when in search mode', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = 'breaking';
-      store.searchResults = [
-        { id: 1, name: 'Breaking Bad', genres: ['Drama'] } as Show,
-        { id: 2, name: 'Friends', genres: ['Comedy'] } as Show,
-      ];
+      setupStore({
+        searchQuery: 'breaking',
+        searchResults: [
+          createMockShow(1, 'Breaking Bad'),
+          createMockShow(2, 'Friends', ['Comedy']),
+        ],
+      });
       const wrapper = createWrapper();
       expect(wrapper.text()).toContain('Search Results for "breaking"');
       expect(wrapper.findComponent({ name: 'ShowCard' }).exists()).toBe(true);
     });
 
     it('should show empty state when no search results', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = 'nonexistent';
-      store.searchResults = [];
+      setupStore({
+        searchQuery: 'nonexistent',
+        searchResults: [],
+      });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'EmptyState' }).exists()).toBe(true);
     });
   });
 
-  describe('Catalog Mode', () => {
-    it('should show genre rows when not in search mode', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = '';
-      store.allShows = [
-        { id: 1, name: 'Breaking Bad', genres: ['Drama'], rating: { average: 9.5 } } as Show,
-        { id: 2, name: 'Friends', genres: ['Comedy'], rating: { average: 8.9 } } as Show,
-      ];
+  describe('Catalog Mode - Lazy Loading', () => {
+    it('should show initial 4 genres when not in search mode', () => {
+      setupStore({ allShows: createMockShows(8) });
       const wrapper = createWrapper();
-      expect(wrapper.findComponent({ name: 'GenreRow' }).exists()).toBe(true);
+
+      const genreRows = wrapper.findAllComponents({ name: 'GenreRow' });
+      expect(genreRows).toHaveLength(4);
+    });
+
+    it('should show loading indicator when loading more genres', async () => {
+      setupStore({ allShows: createMockShows(8) });
+      const wrapper = createWrapper();
+
+      const genreRows = wrapper.findAllComponents({ name: 'GenreRow' });
+      expect(genreRows).toHaveLength(4);
+
+      expect(wrapper.text()).toContain('Showing');
+      expect(wrapper.text()).toContain('% of genres');
+    });
+
+    it('should show progress percentage correctly', () => {
+      setupStore({ allShows: createMockShows(8) });
+      const wrapper = createWrapper();
+
+      expect(wrapper.text()).toContain('50% of genres');
+    });
+
+    it('should not show progress indicator when all genres are visible', () => {
+      setupStore({ allShows: createMockShows(3) });
+      const wrapper = createWrapper();
+
+      const genreRows = wrapper.findAllComponents({ name: 'GenreRow' });
+      expect(genreRows).toHaveLength(3);
+
+      expect(wrapper.text()).not.toContain('Showing');
+      expect(wrapper.text()).not.toContain('% of genres');
     });
 
     it('should show empty state when no shows available', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.allShows = [];
+      setupStore({ allShows: [] });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'EmptyState' }).exists()).toBe(true);
+    });
+  });
+
+  describe('Lazy Loading Reset Behavior', () => {
+    it('should reset lazy loading when switching from search mode to catalog', async () => {
+      const store = setupStore({ allShows: createMockShows(8) });
+      const wrapper = createWrapper();
+
+      store.searchQuery = 'test';
+      await wrapper.vm.$nextTick();
+
+      store.searchQuery = '';
+      await wrapper.vm.$nextTick();
+
+      const genreRows = wrapper.findAllComponents({ name: 'GenreRow' });
+      expect(genreRows).toHaveLength(4);
+    });
+
+    it('should reset lazy loading when switching from filtered results to catalog', async () => {
+      const store = setupStore({ allShows: createMockShows(8) });
+      const wrapper = createWrapper();
+
+      store.selectedGenres = ['Drama'];
+      await wrapper.vm.$nextTick();
+
+      store.selectedGenres = [];
+      await wrapper.vm.$nextTick();
+
+      const genreRows = wrapper.findAllComponents({ name: 'GenreRow' });
+      expect(genreRows).toHaveLength(4);
     });
   });
 
   describe('Conditional Rendering', () => {
     it('should not show main content when loading', () => {
-      const store = useShowsStore();
-      store.loading = true;
+      setupStore({ loading: true });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'Loading' }).exists()).toBe(true);
       expect(wrapper.findComponent({ name: 'GenreRow' }).exists()).toBe(false);
     });
 
     it('should show search results when in search mode', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = 'test';
-      store.searchResults = [{ id: 1, name: 'Test Show', genres: ['Drama'] } as Show];
+      setupStore({
+        searchQuery: 'test',
+        searchResults: [createMockShow(1, 'Test Show')],
+      });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'ShowCard' }).exists()).toBe(true);
       expect(wrapper.findComponent({ name: 'GenreRow' }).exists()).toBe(false);
     });
 
     it('should show genre rows when not in search mode', () => {
-      const store = useShowsStore();
-      store.loading = false;
-      store.searchQuery = '';
-      store.allShows = [{ id: 1, name: 'Test Show', genres: ['Drama'] } as Show];
+      setupStore({ allShows: [createMockShow()] });
       const wrapper = createWrapper();
       expect(wrapper.findComponent({ name: 'GenreRow' }).exists()).toBe(true);
       expect(wrapper.findComponent({ name: 'ShowCard' }).exists()).toBe(false);
