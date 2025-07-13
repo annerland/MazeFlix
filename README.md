@@ -2,9 +2,40 @@
 
 A Vue 3 application for browsing TV shows, genre-based carousels, debounced search, and detailed show information. Built with TypeScript, Pinia, Tailwind CSS, and Vitest.
 
+Link: https://chipper-baklava-ea44a4.netlify.app/
+
+Example:
 https://github.com/user-attachments/assets/d2a3b78b-9d59-4541-9367-18a4059580f9
 
 ---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 16+
+- pnpm (recommended) or npm
+
+**Install dependencies:**
+   ```bash
+   pnpm install
+   # or
+   npm install
+   ```
+**Start the development server:**
+   ```bash
+   pnpm dev
+   # or
+   npm run dev
+   ```
+**Run tests:**
+   ```bash
+   pnpm test
+   # or
+   npm run test
+   ```
+
+  
 
 ## ✨ Features
 
@@ -69,30 +100,6 @@ I chose Pinia for centralized state management. All show data, search state, and
 
 ---
 
-Run all tests with:
-```bash
-pnpm test
-# or
-npm run test
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 16+
-- pnpm (recommended) or npm
-
----
-
 ## 📚 API
 
 This project uses the [TVMaze API](https://api.tvmaze.com) for all show data. No auth required.
-
----
-
-## 📄 License
-
-MIT
