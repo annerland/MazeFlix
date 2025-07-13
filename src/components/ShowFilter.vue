@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useShowsStore } from '../stores/shows';
+import { useShowsStore, ShowType } from '../stores/shows';
 import PillDropdown from './PillDropdown.vue';
 
 const showsStore = useShowsStore();
@@ -38,7 +38,7 @@ watch(selectedRating, (rating) => {
   showsStore.setMinRating(rating);
 });
 watch(selectedType, (type) => {
-  showsStore.setSelectedType(type);
+  showsStore.setSelectedType(type as ShowType);
   if (type === 'all') {
     selectedGenre.value = '_all';
     selectedRating.value = 0;
