@@ -2,6 +2,8 @@
 
 A Vue 3 application for browsing TV shows, genre-based carousels, debounced search, and detailed show information. Built with TypeScript, Pinia, Tailwind CSS, and Vitest.
 
+https://github.com/user-attachments/assets/d2a3b78b-9d59-4541-9367-18a4059580f9
+
 ---
 
 ## ✨ Features
