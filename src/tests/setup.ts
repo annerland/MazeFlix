@@ -42,18 +42,30 @@ if (typeof global !== 'undefined') {
     disconnect: vi.fn(),
   }));
 } else {
-  (window as any).fetch = vi.fn();
-  (window as any).IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  Object.defineProperty(window, 'fetch', {
+    value: vi.fn(),
+    writable: true,
+  });
 
-  (window as any).ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  Object.defineProperty(window, 'IntersectionObserver', {
+    value: vi.fn().mockImplementation(() => ({
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    })),
+    writable: true,
+    configurable: true,
+  });
+
+  Object.defineProperty(window, 'ResizeObserver', {
+    value: vi.fn().mockImplementation(() => ({
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    })),
+    writable: true,
+    configurable: true,
+  });
 }
 
 export { pinia, router };

@@ -61,47 +61,59 @@ defineExpose({ clearSearch });
 
 <template>
   <div class="relative">
-    <div
+    <form
       class="relative flex items-center transition-all duration-300 ease-in-out"
       :class="isExpanded ? 'w-60 md:w-80' : 'w-10'"
+      @submit.prevent="handleSearch(searchQuery)"
+      role="search"
     >
       <button
         v-if="!isExpanded"
         @click="expandSearch"
         class="flex items-center justify-center cursor-pointer w-10 h-10 hover:scale-120 transition-all duration-200 text-gray-300 hover:text-white"
         title="Search"
+        type="button"
+        aria-label="Open search"
       >
-        <Search class="w-6 h-6" />
+        <Search class="w-6 h-6" aria-hidden="true" />
       </button>
 
       <div v-show="isExpanded" class="relative flex-1 flex items-center">
         <input
           ref="searchInput"
           v-model="searchQuery"
-          type="text"
+          type="search"
           placeholder="Search TV shows..."
           @blur="collapseSearch"
           @keydown="handleKeydown"
           class="w-full text-white pl-10 pr-12 py-2 rounded bg-black border border-gray-700 transition-all duration-300 ease-in-out focus:border-primary focus:outline-none"
+          aria-label="Search TV shows"
+          autocomplete="off"
         />
 
         <div class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-          <Search class="w-5 h-5 text-gray-400" />
+          <Search class="w-5 h-5 text-gray-400" aria-hidden="true" />
         </div>
 
         <div class="absolute right-3 top-6 transform -translate-y-3">
-          <div v-if="isSearching" class="animate-spin rounded h-4 w-4 border-b-2 border-primary" />
+          <div
+            v-if="isSearching"
+            class="animate-spin rounded h-4 w-4 border-b-2 border-primary"
+            aria-hidden="true"
+          />
           <button
             v-else-if="searchQuery"
             @click="clearSearch"
             class="text-gray-400 hover:text-white transition-colors duration-200"
             title="Clear search"
+            type="button"
+            aria-label="Clear search"
           >
-            <Close class="w-5 h-5 cursor-pointer" />
+            <Close class="w-5 h-5 cursor-pointer" aria-hidden="true" />
           </button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 

@@ -43,15 +43,26 @@ function selectOption(option: Option) {
       :class="isOpen ? 'bg-white text-gray-900' : 'text-white'"
       @click="isOpen = !isOpen"
       type="button"
+      :aria-expanded="isOpen"
+      :aria-haspopup="true"
+      :aria-label="`${label} dropdown`"
     >
       <span>{{ label }}</span>
-      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg
+        class="w-4 h-4 ml-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
       </svg>
     </button>
     <div
       v-if="isOpen"
       class="absolute left-0 mt-2 overflow-y-auto w-40 h-90 bg-background border-gray-700 rounded-lg shadow-lg z-50 py-2"
+      role="listbox"
+      :aria-label="`${label} options`"
     >
       <button
         v-for="option in options"
@@ -63,6 +74,10 @@ function selectOption(option: Option) {
             ? 'bg-white text-black'
             : 'bg-brimary text-white hover:bg-gray-800',
         ]"
+        type="button"
+        role="option"
+        :aria-selected="option.value === modelValue"
+        :aria-label="`Select ${option.label}`"
       >
         {{ option.label }}
       </button>

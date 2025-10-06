@@ -1,6 +1,8 @@
 <template>
-  <div
+  <section
     class="w-full h-full bg-gradient-to-br from-purple-800 to-purple-900 flex flex-col items-center justify-center p-4 text-center"
+    role="img"
+    aria-label="No image available for this show"
   >
     <div class="mb-3 animate-bounce">
       <span class="text-4xl" role="img" aria-label="Camera">📸</span>
@@ -12,7 +14,7 @@
       This show went on vacation without its photo passport!
       <span class="block mt-1">Maybe it's exploring the world? 🌍</span>
     </p>
-  </div>
+  </section>
 </template>
 
 <style scoped>

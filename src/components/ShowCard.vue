@@ -22,15 +22,21 @@ const formatRating = (rating: number | null): string => {
 </script>
 
 <template>
-  <div
+  <article
     class="relative h-auto md:h-72 w-32 md:w-52 rounded overflow-hidden shadow-lg hover:shadow-xl hover:shadow-inner transition-all duration-300 cursor-pointer group"
     @click="handleClick"
+    tabindex="0"
+    :aria-label="`View details for ${show.name}`"
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
   >
     <img
       v-if="show.image?.medium"
       :src="show.image?.medium"
       :alt="show.name"
       class="object-cover"
+      loading="lazy"
+      decoding="async"
     />
 
     <EmptyStateImage v-else />
@@ -38,8 +44,9 @@ const formatRating = (rating: number | null): string => {
     <div
       v-if="show.rating?.average"
       class="absolute top-3 right-3 bg-black/80 backdrop-blur-sm rounded px-2 py-1 flex items-center gap-1 text-white text-sm font-semibold z-10"
+      aria-label="Rating: {{ formatRating(show.rating.average) }} stars"
     >
-      <span class="text-yellow-500">★</span>
+      <span class="text-yellow-500" aria-hidden="true">★</span>
       <span>{{ formatRating(show.rating.average) }}</span>
     </div>
 
@@ -50,15 +57,16 @@ const formatRating = (rating: number | null): string => {
     <div
       class="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
     >
-      <div class="flex flex-wrap gap-1 mb-2">
+      <div class="flex flex-wrap gap-1 mb-2" role="list" aria-label="Genres">
         <span
           v-for="genre in show.genres.slice(0, 3)"
           :key="genre"
           class="px-2 bg-primary text-xs rounded text-white font-semibold"
+          role="listitem"
         >
           {{ genre }}
         </span>
       </div>
     </div>
-  </div>
+  </article>
 </template>

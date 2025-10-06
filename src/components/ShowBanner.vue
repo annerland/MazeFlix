@@ -25,12 +25,14 @@ const handleClick = () => {
 </script>
 
 <template>
-  <div
+  <section
     class="relative w-full min-h-96 md:min-h-200 overflow-hidden mb-8 transition-all duration-500 ease-in-out mt-16 md:mt-0"
     :class="{ 'cursor-pointer': showSummary }"
     @click="handleClick"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    role="banner"
+    :aria-label="`Banner for ${show.name}`"
   >
     <div class="absolute inset-0">
       <img
@@ -38,6 +40,9 @@ const handleClick = () => {
         :src="image"
         :alt="`${show.name} banner`"
         class="w-full h-full object-cover"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
       />
       <EmptyStateImage v-else />
 
@@ -65,8 +70,12 @@ const handleClick = () => {
           class="flex items-center gap-4 mb-4 text-sm transition-all duration-500"
           :class="{ 'mb-2': isHovered && showSummary && show.summary }"
         >
-          <span v-if="show.rating.average" class="flex items-center gap-1">
-            <span class="text-yellow-500">★</span>
+          <span
+            v-if="show.rating.average"
+            class="flex items-center gap-1"
+            aria-label="Rating: {{ show.rating.average.toFixed(1) }} stars"
+          >
+            <span class="text-yellow-500" aria-hidden="true">★</span>
             <span>{{ show.rating.average.toFixed(1) }}</span>
           </span>
 
@@ -76,7 +85,7 @@ const handleClick = () => {
 
           <span v-if="show.runtime">{{ show.runtime }} min</span>
 
-          <span class="px-2 py-1 bg-green-600 text-xs rounded">
+          <span class="px-2 py-1 bg-green-700 text-xs rounded">
             {{ show.status }}
           </span>
         </div>
@@ -84,11 +93,14 @@ const handleClick = () => {
         <div
           class="flex flex-wrap gap-2 mb-4 transition-all duration-500"
           :class="{ 'mb-2': isHovered && showSummary && show.summary }"
+          role="list"
+          aria-label="Genres"
         >
           <span
             v-for="genre in show.genres"
             :key="genre"
             class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded text-xs"
+            role="listitem"
           >
             {{ genre }}
           </span>
@@ -109,5 +121,5 @@ const handleClick = () => {
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>

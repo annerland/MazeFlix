@@ -48,23 +48,28 @@ watch(selectedType, (type) => {
 </script>
 
 <template>
-  <div class="mb-6 flex flex-col gap-4">
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="font-semibold text-lg text-white mr-2">Type</span>
-      <button
-        v-for="option in typeOptions"
-        :key="option.value"
-        @click="selectedType = option.value"
-        class="px-4 py-1 rounded-full cursor-pointer font-semibold focus:outline-none transition-all duration-200"
-        :class="[
-          selectedType === option.value
-            ? 'bg-white text-black shadow'
-            : 'bg-transparent text-white hover:bg-gray-800',
-          'border border-gray-700',
-        ]"
-      >
-        {{ option.label }}
-      </button>
+  <form class="mb-6 flex flex-col gap-4">
+    <fieldset class="flex items-center gap-2 flex-wrap">
+      <legend class="font-semibold text-lg text-white mr-2">Type</legend>
+      <div class="flex gap-2 flex-wrap" role="radiogroup" aria-label="Show type selection">
+        <button
+          v-for="option in typeOptions"
+          :key="option.value"
+          @click="selectedType = option.value"
+          class="px-4 py-1 rounded-full cursor-pointer font-semibold focus:outline-none transition-all duration-200"
+          :class="[
+            selectedType === option.value
+              ? 'bg-white text-black shadow'
+              : 'bg-transparent text-white hover:bg-gray-800',
+            'border border-gray-700',
+          ]"
+          type="button"
+          :aria-pressed="selectedType === option.value"
+          :aria-label="`Select ${option.label}`"
+        >
+          {{ option.label }}
+        </button>
+      </div>
 
       <div class="flex items-center gap-2 flex-wrap">
         <PillDropdown
@@ -77,6 +82,6 @@ watch(selectedType, (type) => {
       <div class="flex items-center gap-2 flex-wrap">
         <PillDropdown label="Rating" :options="ratingOptions" v-model="selectedRating" />
       </div>
-    </div>
-  </div>
+    </fieldset>
+  </form>
 </template>

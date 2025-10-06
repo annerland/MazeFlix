@@ -28,6 +28,13 @@ onMounted(async () => {
   await showsStore.getShowBanner(randomId);
   await showsStore.getShowById(randomId);
   await showsStore.loadShowsCatalog();
+
+  if (showsStore.showBanner?.resolutions?.original?.url) {
+    const preloadLink = document.getElementById('lcp-preload') as HTMLLinkElement;
+    if (preloadLink) {
+      preloadLink.href = showsStore.showBanner.resolutions.original.url;
+    }
+  }
 });
 
 const handleShowClick = (show: Show) => {
@@ -41,6 +48,19 @@ watch(
       resetLazyLoading();
     }
   },
+);
+
+watch(
+  () => showsStore.showBanner?.resolutions?.original?.url,
+  (newBannerUrl) => {
+    if (newBannerUrl) {
+      const preloadLink = document.getElementById('lcp-preload') as HTMLLinkElement;
+      if (preloadLink) {
+        preloadLink.href = newBannerUrl;
+      }
+    }
+  },
+  { immediate: true },
 );
 </script>
 
@@ -65,8 +85,8 @@ watch(
       <ShowFilter v-if="!showsStore.isInSearchMode" />
       <FilteredResults v-if="showsStore.hasActiveFilters && !showsStore.isInSearchMode" />
 
-      <div v-else-if="!showsStore.isInSearchMode">
-        <div v-if="showsStore.showsByGenre.length > 0">
+      <section v-else-if="!showsStore.isInSearchMode">
+        <section v-if="showsStore.showsByGenre.length > 0">
           <GenreRow
             v-for="genreSection in visibleGenres"
             :key="genreSection.genre"
@@ -75,21 +95,21 @@ watch(
             @show-click="handleShowClick"
           />
 
-          <div v-if="isLoadingMore" class="flex justify-center mt-8 mb-8">
+          <section v-if="isLoadingMore" class="flex justify-center mt-8 mb-8" aria-live="polite">
             <div class="flex items-center space-x-2 text-white">
               <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
               <span>Loading more shows...</span>
             </div>
-          </div>
+          </section>
 
-          <div v-if="hasMoreGenres" class="flex justify-center mt-4 mb-8">
+          <aside v-if="hasMoreGenres" class="flex justify-center mt-4 mb-8">
             <div class="text-sm text-gray-400">
               Showing {{ Math.round(progressPercentage) }}% of genres
             </div>
-          </div>
-        </div>
+          </aside>
+        </section>
         <EmptyState v-else message="No shows available." />
-      </div>
+      </section>
     </main>
   </div>
 </template>

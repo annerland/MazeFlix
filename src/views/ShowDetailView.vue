@@ -54,12 +54,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen text-white">
+  <article class="min-h-screen text-white">
     <main class="w-full">
-      <Loading v-if="loading" message="Loading show details..." />
+      <section v-if="loading" aria-live="polite">
+        <Loading message="Loading show details..." />
+      </section>
       <SearchMode v-else-if="showsStore.isInSearchMode" />
       <ShowDetail v-else-if="show" :show="show" :banner-image="bannerImage ?? ''" />
-      <NotFound v-else-if="error" :error="error ?? 'Show not found'" />
+      <section v-else-if="error" role="alert" aria-live="assertive">
+        <NotFound :error="error ?? 'Show not found'" />
+      </section>
     </main>
-  </div>
+  </article>
 </template>

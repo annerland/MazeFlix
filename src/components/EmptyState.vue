@@ -7,7 +7,7 @@ defineProps<Props>();
 </script>
 
 <template>
-  <div class="text-center py-8">
+  <section class="text-center py-8" role="status" aria-live="polite">
     <p class="text-gray-400">{{ message }}</p>
-  </div>
+  </section>
 </template>

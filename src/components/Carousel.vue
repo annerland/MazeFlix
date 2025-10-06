@@ -73,16 +73,7 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchDrag({
 
 <template>
   <div class="relative overflow-hidden">
-    <div v-if="totalPages > 1 && !isMobile" class="flex justify-end mb-4 gap-[1px]">
-      <button
-        v-for="page in totalPages"
-        :key="page"
-        class="w-3 h-[2px] rounded transition-all duration-300"
-        :class="page - 1 === currentIndex ? 'bg-gray-500' : 'bg-gray-800'"
-      />
-    </div>
-
-    <div
+    <section
       ref="containerRef"
       class="flex gap-4 transition-transform ease-in-out"
       :style="{
@@ -93,40 +84,48 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchDrag({
       @touchstart="handleTouchStart"
       @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
+      role="region"
+      :aria-label="`Carousel with ${items.length} items`"
     >
       <slot />
-    </div>
+    </section>
 
-    <button
-      v-if="canGoPrevious"
-      @click="goPrevious"
-      class="absolute cursor-pointer -translate-y-5 flex items-center justify-center transition-all duration-300 ease-in-out z-10"
-      :class="
-        isMobile
-          ? 'left-[-2px] bottom-12 w-8 h-8 bg-black/70 rounded-full'
-          : 'left-2 -translate-x-4 w-12 h-[95%] bg-gradient-to-r from-black to-transparent top-9'
-      "
-    >
-      <ArrowLeft
-        class="text-white transition-all duration-300 ease-in-out hover:scale-120"
-        :class="isMobile ? 'w-4 h-4' : 'w-12 h-12'"
-      />
-    </button>
+    <nav class="absolute inset-0 pointer-events-none" aria-label="Carousel navigation">
+      <button
+        v-if="canGoPrevious"
+        @click="goPrevious"
+        class="absolute cursor-pointer flex items-center justify-center transition-all duration-300 ease-in-out z-10 pointer-events-auto"
+        :class="
+          isMobile
+            ? 'left-[-2px] bottom-12 w-8 h-8 bg-black/70 rounded-full'
+            : 'left-2 -translate-x-4 w-12 h-[100%] bg-gradient-to-r from-black to-transparent '
+        "
+        aria-label="Previous items"
+      >
+        <ArrowLeft
+          class="text-white transition-all duration-300 ease-in-out hover:scale-120"
+          :class="isMobile ? 'w-4 h-4' : 'w-12 h-12'"
+          aria-hidden="true"
+        />
+      </button>
 
-    <button
-      v-if="canGoNext"
-      @click="goNext"
-      class="absolute cursor-pointer -translate-y-5 flex items-center justify-center transition-all duration-300 ease-in-out z-10"
-      :class="
-        isMobile
-          ? 'right-[-2px] w-8 h-8 bg-black/90 bottom-12 rounded-full'
-          : 'right-2 translate-x-4 top-9 w-12 h-[95%] bg-gradient-to-l from-black to-transparent'
-      "
-    >
-      <ArrowRight
-        class="text-white transition-all duration-300 ease-in-out hover:scale-120"
-        :class="isMobile ? 'w-4 h-4' : 'w-12 h-12'"
-      />
-    </button>
+      <button
+        v-if="canGoNext"
+        @click="goNext"
+        class="absolute cursor-pointer flex items-center justify-center transition-all duration-300 ease-in-out z-10 pointer-events-auto"
+        :class="
+          isMobile
+            ? 'right-[-2px] w-8 h-8 bg-black/90 bottom-12 rounded-full'
+            : 'right-2 translate-x-4 w-12 h-[100%] bg-gradient-to-l from-black to-transparent'
+        "
+        aria-label="Next items"
+      >
+        <ArrowRight
+          class="text-white transition-all duration-300 ease-in-out hover:scale-120"
+          :class="isMobile ? 'w-4 h-4' : 'w-12 h-12'"
+          aria-hidden="true"
+        />
+      </button>
+    </nav>
   </div>
 </template>
